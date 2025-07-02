@@ -108,7 +108,8 @@ class AIAssistant {
 
         const contentElement = document.createElement("div");
         contentElement.classList.add("content");
-        contentElement.innerHTML = marked.parse(text);
+        // 檢查 marked 是否存在，如果不存在則直接使用 text
+        contentElement.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
 
         messageElement.appendChild(avatarElement);
         messageElement.appendChild(contentElement);
@@ -263,7 +264,7 @@ class AIAssistant {
         }
 
         // 這裡可以添加更多編輯模式下的指令處理邏輯
-        // 例如：解析 "編輯貼文 [ID]"，然後呼叫後端API
+        // 例如：解析 \"編輯貼文 [ID]\"，然後呼叫後端API
         this.addMessage("在編輯模式下，請使用具體指令，例如：\"編輯貼文 [ID]\" 或 \"新增貼文\"。", "assistant");
         return true;
     }
@@ -276,5 +277,6 @@ let aiAssistant;
 document.addEventListener("DOMContentLoaded", () => {
     aiAssistant = new AIAssistant();
 });
+
 
 
