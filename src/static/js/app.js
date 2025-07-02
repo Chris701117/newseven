@@ -6,6 +6,12 @@ class App {
         this.sidebarCollapsed = false;
         this.isMobile = window.innerWidth <= 768;
         
+        // 綁定 this 到方法，確保在回調中上下文正確
+        this.updatePageTitle = this.updatePageTitle.bind(this);
+        this.loadView = this.loadView.bind(this);
+        this.loadDashboard = this.loadDashboard.bind(this);
+        this.switchModule = this.switchModule.bind(this);
+
         this.init();
     }
     
@@ -210,6 +216,18 @@ class App {
         }, 300);
     }
     
+    updatePageTitle(viewName) {
+        const titleMap = {
+            'dashboard': '儀表板',
+            'posts-manage': '貼文管理',
+            'marketing-items': '行銷項目',
+            'operation-items': '營運項目',
+            'profile': '個人資料',
+            'ai-settings': 'AI 助手設定'
+        };
+        document.title = `七七七科技 - ${titleMap[viewName] || viewName}`;
+    }
+
     updateDashboardStats(stats) {
         // 更新儀表板統計數據
         const elements = {
@@ -475,5 +493,9 @@ class App {
 
 // 初始化應用程式
 const app = new App();
+
+
+
+
 
 

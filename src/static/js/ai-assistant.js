@@ -18,6 +18,20 @@ class AIAssistant {
         this.uploadedFiles = [];
         this.editMode = false;
 
+        // 綁定 this 到方法，確保在回調中上下文正確
+        this.sendMessage = this.sendMessage.bind(this);
+        this.addMessage = this.addMessage.bind(this);
+        this.handlePaste = this.handlePaste.bind(this);
+        this.handleDrop = this.handleDrop.bind(this);
+        this.handleFileSelect = this.handleFileSelect.bind(this);
+        this.addFileToUpload = this.addFileToUpload.bind(this);
+        this.removeFileFromUpload = this.removeFileFromUpload.bind(this);
+        this.updateUploadAreaVisibility = this.updateUploadAreaVisibility.bind(this);
+        this.handleQuickAction = this.handleQuickAction.bind(this);
+        this.enableEditMode = this.enableEditMode.bind(this);
+        this.disableEditMode = this.disableEditMode.bind(this);
+        this.handleEditCommand = this.handleEditCommand.bind(this);
+
         this.init();
     }
 
@@ -37,7 +51,7 @@ class AIAssistant {
             this.aiChatClose.addEventListener("click", () => this.closeChatWindow());
         }
         if (this.chatSendBtn) {
-            this.chatSendBtn.addEventListener("click", () => this.sendMessage());
+            this.chatSendBtn.addEventListener("click", this.sendMessage);
         }
         if (this.chatInput) {
             this.chatInput.addEventListener("keypress", (e) => {
@@ -46,8 +60,8 @@ class AIAssistant {
                     this.sendMessage();
                 }
             });
-            this.chatInput.addEventListener("paste", (e) => this.handlePaste(e));
-            this.chatInput.addEventListener("drop", (e) => this.handleDrop(e));
+            this.chatInput.addEventListener("paste", this.handlePaste);
+            this.chatInput.addEventListener("drop", this.handleDrop);
         }
         if (this.aiChatUploadBtn) {
             this.aiChatUploadBtn.addEventListener("click", () => this.aiChatFileInput.click());
@@ -59,7 +73,7 @@ class AIAssistant {
             });
         }
         if (this.aiChatFileInput) {
-            this.aiChatFileInput.addEventListener("change", (e) => this.handleFileSelect(e));
+            this.aiChatFileInput.addEventListener("change", this.handleFileSelect);
         }
 
         this.quickActionBtns.forEach(btn => {
@@ -127,10 +141,15 @@ class AIAssistant {
 
         try {
             this.addMessage("思考中...", "assistant");
-            const response = await API.sendAIChatMessage(this.currentChatSessionId, message, this.uploadedFiles);
-            this.chatMessages.lastChild.remove(); // 移除“思考中...”
-            this.addMessage(response.reply, "assistant");
-            this.currentChatSessionId = response.session_id; // 更新會話ID
+            // 確保 API 物件存在且 sendAIChatMessage 方法存在
+            if (typeof API !== 'undefined' && typeof API.sendAIChatMessage === 'function') {
+                const response = await API.sendAIChatMessage(this.currentChatSessionId, message, this.uploadedFiles);
+                this.chatMessages.lastChild.remove(); // 移除“思考中...”
+                this.addMessage(response.reply, "assistant");
+                this.currentChatSessionId = response.session_id; // 更新會話ID
+            } else {
+                throw new Error("API.sendAIChatMessage is not defined or not a function.");
+            }
         } catch (error) {
             console.error("發送訊息失敗:", error);
             this.chatMessages.lastChild.remove();
@@ -277,6 +296,8 @@ let aiAssistant;
 document.addEventListener("DOMContentLoaded", () => {
     aiAssistant = new AIAssistant();
 });
+
+
 
 
 
