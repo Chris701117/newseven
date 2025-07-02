@@ -8,14 +8,17 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from flask import Flask, jsonify
 from flask_cors import CORS
+
 from routes.posts import posts_bp
 from routes.marketing import marketing_bp
 from routes.operation import operation_bp
 from routes.settings import settings_bp
+from routes.ai_chat import ai_chat_bp
 from routes.ai_mock import ai_mock_bp
 from routes.ai_content_editor import ai_editor_bp
 from routes.ai_settings import ai_settings_bp
 from routes.auth import auth_bp
+from routes.file_upload import file_upload_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -48,14 +51,16 @@ app.register_blueprint(posts_bp, url_prefix='/api')
 app.register_blueprint(marketing_bp, url_prefix='/api')
 app.register_blueprint(operation_bp, url_prefix='/api')
 app.register_blueprint(settings_bp, url_prefix='/api')
+app.register_blueprint(ai_chat_bp, url_prefix='/api')
 app.register_blueprint(ai_mock_bp, url_prefix='/api')
 app.register_blueprint(ai_editor_bp, url_prefix='/api')
 app.register_blueprint(ai_settings_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api')
+app.register_blueprint(file_upload_bp, url_prefix='/api')
 
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

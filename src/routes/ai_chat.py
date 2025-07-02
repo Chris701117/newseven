@@ -4,7 +4,8 @@ import uuid
 from datetime import datetime
 import json
 import os
-from ..models.ai_chat import ChatSession, ChatMessage, AISettings, db
+import requests
+from models.ai_chat import ChatSession, ChatMessage, AISettings, db
 
 ai_chat_bp = Blueprint('ai_chat', __name__)
 
@@ -75,24 +76,105 @@ def get_chat_messages(session_id):
 
 @ai_chat_bp.route('/chat/sessions/<session_id>/messages', methods=['POST'])
 def send_chat_message(session_id):
-    """發送聊天訊息並獲取AI回應"""
+    """發送聊天訊息並獲取AI回應（支援多模態輸入）"""
     try:
         data = request.get_json()
         user_message = data.get('message', '').strip()
+        files = data.get('files', [])  # 上傳的文件
+        gdrive_links = data.get('gdrive_links', [])  # Google Drive連結
         
-        if not user_message:
-            return jsonify({'success': False, 'error': '訊息不能為空'}), 400
+        # 檢查是否有任何內容
+        if not user_message and not files and not gdrive_links:
+            return jsonify({'success': False, 'error': '請提供訊息、文件或連結'}), 400
         
         # 檢查會話是否存在
         session = ChatSession.query.filter_by(session_id=session_id).first()
         if not session:
             return jsonify({'success': False, 'error': '會話不存在'}), 404
         
-        # 儲存用戶訊息
+        # 處理上傳的文件
+        processed_files = []
+        for file_info in files:
+            try:
+                # 上傳文件到Cloudinary並提取內容
+                upload_response = requests.post(
+                    f"{request.host_url}api/upload-file",
+                    files={'file': file_info},
+                    data={'session_id': session_id}
+                )
+                if upload_response.status_code == 200:
+                    upload_data = upload_response.json()
+                    if upload_data['success']:
+                        processed_files.append(upload_data['data'])
+            except Exception as e:
+                current_app.logger.error(f"文件處理錯誤: {str(e)}")
+        
+        # 處理Google Drive連結
+        processed_gdrive = []
+        for link in gdrive_links:
+            try:
+                gdrive_response = requests.post(
+                    f"{request.host_url}api/process-gdrive-link",
+                    json={'url': link, 'session_id': session_id}
+                )
+                if gdrive_response.status_code == 200:
+                    gdrive_data = gdrive_response.json()
+                    if gdrive_data['success']:
+                        processed_gdrive.append(gdrive_data['data'])
+            except Exception as e:
+                current_app.logger.error(f"Google Drive連結處理錯誤: {str(e)}")
+        
+        # 構建完整的用戶訊息內容
+        full_user_content = []
+        
+        # 添加文字訊息
+        if user_message:
+            full_user_content.append({
+                "type": "text",
+                "text": user_message
+            })
+        
+        # 添加圖片
+        for file_data in processed_files:
+            if file_data['resource_type'] == 'image':
+                full_user_content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": file_data['url']
+                    }
+                })
+            elif file_data.get('content'):  # 文檔內容
+                full_user_content.append({
+                    "type": "text",
+                    "text": f"[文件內容: {file_data.get('type', '未知類型')}]\n{file_data['content']}"
+                })
+        
+        # 添加Google Drive內容
+        for gdrive_data in processed_gdrive:
+            if gdrive_data['type'] == 'image':
+                full_user_content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": gdrive_data['url']
+                    }
+                })
+            elif gdrive_data.get('content'):
+                full_user_content.append({
+                    "type": "text",
+                    "text": f"[Google Drive文件內容]\n{gdrive_data['content']}"
+                })
+        
+        # 儲存用戶訊息（包含文件和連結資訊）
+        user_content_json = {
+            'message': user_message,
+            'files': processed_files,
+            'gdrive_links': processed_gdrive
+        }
+        
         user_msg = ChatMessage(
             session_id=session_id,
             role='user',
-            content=user_message
+            content=json.dumps(user_content_json, ensure_ascii=False)
         )
         db.session.add(user_msg)
         
@@ -103,68 +185,78 @@ def send_chat_message(session_id):
         messages = [
             {
                 "role": "system",
-                "content": "你是七七七科技後台管理系統的AI助手。你可以幫助用戶管理社群貼文、行銷活動、營運項目等。請用繁體中文回答，並提供專業且有用的建議。"
+                "content": "你是七七七科技後台管理系統的AI助手。你可以幫助用戶管理社群貼文、行銷活動、營運項目等。你能夠理解和分析圖片、文檔內容，並提供專業且有用的建議。請用繁體中文回答。"
             }
         ]
         
-        # 添加歷史對話（限制最近20條）
-        for msg in history_messages[-20:]:
-            messages.append({
-                "role": msg.role,
-                "content": msg.content
-            })
+        # 添加歷史對話（限制最近10條，避免token過多）
+        for msg in history_messages[-10:]:
+            try:
+                # 嘗試解析JSON格式的訊息
+                msg_data = json.loads(msg.content)
+                if msg.role == 'user' and isinstance(msg_data, dict):
+                    # 用戶訊息，簡化顯示
+                    text_content = msg_data.get('message', '')
+                    if msg_data.get('files'):
+                        text_content += f" [包含{len(msg_data['files'])}個文件]"
+                    if msg_data.get('gdrive_links'):
+                        text_content += f" [包含{len(msg_data['gdrive_links'])}個Google Drive連結]"
+                    messages.append({
+                        "role": msg.role,
+                        "content": text_content
+                    })
+                else:
+                    messages.append({
+                        "role": msg.role,
+                        "content": msg.content
+                    })
+            except (json.JSONDecodeError, TypeError):
+                # 舊格式訊息，直接使用
+                messages.append({
+                    "role": msg.role,
+                    "content": msg.content
+                })
         
         # 添加當前用戶訊息
-        messages.append({
-            "role": "user",
-            "content": user_message
-        })
+        if len(full_user_content) == 1 and full_user_content[0]["type"] == "text":
+            # 純文字訊息
+            messages.append({
+                "role": "user",
+                "content": full_user_content[0]["text"]
+            })
+        else:
+            # 多模態訊息
+            messages.append({
+                "role": "user",
+                "content": full_user_content
+            })
         
         # 調用OpenAI API
         try:
             client = get_openai_client()
-            assistant_id = get_ai_setting('openai_assistant_id')
             
-            if assistant_id:
-                # 使用Assistant API
-                thread = client.beta.threads.create()
-                
-                client.beta.threads.messages.create(
-                    thread_id=thread.id,
-                    role="user",
-                    content=user_message
-                )
-                
-                run = client.beta.threads.runs.create(
-                    thread_id=thread.id,
-                    assistant_id=assistant_id
-                )
-                
-                # 等待回應
-                import time
-                while run.status in ['queued', 'in_progress']:
-                    time.sleep(1)
-                    run = client.beta.threads.runs.retrieve(
-                        thread_id=thread.id,
-                        run_id=run.id
-                    )
-                
-                if run.status == 'completed':
-                    messages_response = client.beta.threads.messages.list(
-                        thread_id=thread.id
-                    )
-                    ai_response = messages_response.data[0].content[0].text.value
-                else:
-                    ai_response = "抱歉，AI助手暫時無法回應，請稍後再試。"
+            # 檢查是否有圖片內容，決定使用的模型
+            has_images = any(
+                content.get("type") == "image_url" 
+                for content in (full_user_content if isinstance(full_user_content, list) else [])
+            )
+            
+            if has_images:
+                # 使用GPT-4V處理圖片
+                model = "gpt-4-vision-preview"
+                max_tokens = 1000
             else:
-                # 使用Chat Completions API
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=messages,
-                    max_tokens=1000,
-                    temperature=0.7
-                )
-                ai_response = response.choices[0].message.content
+                # 使用標準模型
+                model = "gpt-3.5-turbo"
+                max_tokens = 1000
+            
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=0.7
+            )
+            ai_response = response.choices[0].message.content
                 
         except Exception as openai_error:
             current_app.logger.error(f"OpenAI API error: {str(openai_error)}")
@@ -186,7 +278,13 @@ def send_chat_message(session_id):
         return jsonify({
             'success': True,
             'data': {
-                'user_message': user_msg.to_dict(),
+                'user_message': {
+                    'id': user_msg.id,
+                    'content': user_message,
+                    'files': processed_files,
+                    'gdrive_links': processed_gdrive,
+                    'timestamp': user_msg.timestamp.isoformat()
+                },
                 'ai_response': ai_msg.to_dict()
             }
         })

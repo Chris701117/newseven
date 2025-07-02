@@ -36,6 +36,12 @@ class AIAssistant {
             }
         });
         
+        // 文件上傳事件
+        this.bindFileUploadEvents();
+        
+        // 拖放事件
+        this.bindDragDropEvents();
+        
         // 快速操作按鈕
         const quickActionBtns = document.querySelectorAll('.quick-action-btn');
         quickActionBtns.forEach(btn => {
@@ -108,13 +114,21 @@ class AIAssistant {
         const input = document.getElementById('aiChatInput');
         const message = input.value.trim();
         
-        if (!message || !this.currentSessionId) return;
+        if (!message && this.getUploadedFiles().length === 0) return;
+        if (!this.currentSessionId) return;
         
-        // 清空輸入框
+        // 獲取上傳的文件
+        const uploadedFiles = this.getUploadedFiles();
+        
+        // 檢測Google Drive連結
+        const gdriveLinks = this.detectGoogleDriveLinks(message);
+        
+        // 清空輸入框和上傳文件
         input.value = '';
+        this.clearUploadedFiles();
         
         // 顯示用戶訊息
-        this.addUserMessage(message);
+        this.addUserMessage(message, uploadedFiles, gdriveLinks);
         
         // 檢查是否為編輯指令
         if (this.editMode || await this.handleEditCommand(message)) {
@@ -129,14 +143,19 @@ class AIAssistant {
         sendBtn.disabled = true;
         
         try {
+            // 準備發送的數據
+            const messageData = {
+                message: message,
+                files: uploadedFiles,
+                gdrive_links: gdriveLinks
+            };
+            
             const response = await fetch(`/api/chat/sessions/${this.currentSessionId}/messages`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    message: message
-                })
+                body: JSON.stringify(messageData)
             });
             
             const result = await response.json();
@@ -160,17 +179,65 @@ class AIAssistant {
         }
     }
     
-    addUserMessage(message) {
+    addUserMessage(message, files = [], gdriveLinks = []) {
         const messagesContainer = document.getElementById('aiChatMessages');
         
         const messageElement = document.createElement('div');
         messageElement.className = 'user-message';
+        
+        let messageContent = '';
+        
+        // 添加文字訊息
+        if (message) {
+            messageContent += `<div class="message-text">${this.formatMessage(message)}</div>`;
+        }
+        
+        // 添加上傳的文件
+        if (files.length > 0) {
+            messageContent += '<div class="message-files">';
+            files.forEach(file => {
+                if (file.type && file.type.startsWith('image/')) {
+                    messageContent += `
+                        <div class="message-file image">
+                            <img src="${file.url}" alt="${file.name}" style="max-width: 200px; max-height: 150px; border-radius: 8px;">
+                            <div class="file-name">${file.name}</div>
+                        </div>
+                    `;
+                } else {
+                    messageContent += `
+                        <div class="message-file">
+                            <i class="fas fa-file"></i>
+                            <span>${file.name}</span>
+                        </div>
+                    `;
+                }
+            });
+            messageContent += '</div>';
+        }
+        
+        // 添加Google Drive連結
+        if (gdriveLinks.length > 0) {
+            messageContent += '<div class="message-gdrive-links">';
+            gdriveLinks.forEach(link => {
+                messageContent += `
+                    <div class="gdrive-link-preview">
+                        <i class="fab fa-google-drive gdrive-icon"></i>
+                        <div class="gdrive-info">
+                            <div class="gdrive-name">Google Drive 檔案</div>
+                            <div class="gdrive-url">${link}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            messageContent += '</div>';
+        }
+        
         messageElement.innerHTML = `
             <div class="user-message-avatar">
                 <i class="fas fa-user"></i>
             </div>
             <div class="user-message-content">
-                ${this.formatMessage(message)}
+                ${messageContent}
             </div>
         `;
         
@@ -533,6 +600,189 @@ document.addEventListener('DOMContentLoaded', () => {
         
         messagesContainer.appendChild(messageElement);
         this.scrollToBottom();
+    }
+    
+    // 文件上傳相關方法
+    bindFileUploadEvents() {
+        const uploadBtn = document.getElementById('aiChatUploadBtn');
+        const imageBtn = document.getElementById('aiChatImageBtn');
+        const fileInput = document.getElementById('aiChatFileInput');
+        
+        // 上傳按鈕點擊事件
+        uploadBtn.addEventListener('click', () => {
+            fileInput.accept = 'image/*,.pdf,.doc,.docx,.txt';
+            fileInput.click();
+        });
+        
+        // 圖片按鈕點擊事件
+        imageBtn.addEventListener('click', () => {
+            fileInput.accept = 'image/*';
+            fileInput.click();
+        });
+        
+        // 文件選擇事件
+        fileInput.addEventListener('change', (e) => {
+            this.handleFileSelection(e.target.files);
+        });
+    }
+    
+    bindDragDropEvents() {
+        const inputContainer = document.querySelector('.ai-chat-input-container');
+        
+        inputContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            inputContainer.classList.add('drag-over');
+        });
+        
+        inputContainer.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            inputContainer.classList.remove('drag-over');
+        });
+        
+        inputContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            inputContainer.classList.remove('drag-over');
+            this.handleFileSelection(e.dataTransfer.files);
+        });
+    }
+    
+    async handleFileSelection(files) {
+        const previewContainer = document.getElementById('uploadedFilesPreview');
+        
+        for (let file of files) {
+            // 檢查文件大小（限制10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                this.addMessage(`❌ 檔案 "${file.name}" 太大，請選擇小於10MB的檔案`, 'assistant');
+                continue;
+            }
+            
+            // 創建預覽元素
+            const previewItem = this.createFilePreview(file);
+            previewContainer.appendChild(previewItem);
+            
+            // 上傳文件
+            await this.uploadFile(file, previewItem);
+        }
+    }
+    
+    createFilePreview(file) {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'file-preview-item';
+        
+        if (file.type.startsWith('image/')) {
+            previewItem.classList.add('image');
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            previewItem.appendChild(img);
+        }
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info';
+        fileInfo.innerHTML = `
+            <div class="file-name">${file.name}</div>
+            <div class="file-size">${this.formatFileSize(file.size)}</div>
+        `;
+        previewItem.appendChild(fileInfo);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-file';
+        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        removeBtn.addEventListener('click', () => {
+            previewItem.remove();
+        });
+        previewItem.appendChild(removeBtn);
+        
+        return previewItem;
+    }
+    
+    async uploadFile(file, previewItem) {
+        try {
+            previewItem.classList.add('file-uploading');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('session_id', this.currentSessionId);
+            
+            const response = await fetch('/api/upload-file', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // 儲存文件資訊到預覽元素
+                previewItem.dataset.fileUrl = result.data.url;
+                previewItem.dataset.fileType = result.data.type;
+                previewItem.dataset.fileName = file.name;
+                
+                previewItem.classList.remove('file-uploading');
+                this.addMessage(`✅ 檔案 "${file.name}" 上傳成功`, 'assistant');
+            } else {
+                previewItem.remove();
+                this.addMessage(`❌ 檔案 "${file.name}" 上傳失敗：${result.error}`, 'assistant');
+            }
+        } catch (error) {
+            console.error('文件上傳失敗:', error);
+            previewItem.remove();
+            this.addMessage(`❌ 檔案 "${file.name}" 上傳失敗`, 'assistant');
+        }
+    }
+    
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    detectGoogleDriveLinks(text) {
+        const gdriveRegex = /https:\/\/drive\.google\.com\/[^\s]+/g;
+        return text.match(gdriveRegex) || [];
+    }
+    
+    async processGoogleDriveLink(url) {
+        try {
+            const response = await fetch('/api/process-gdrive-link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: url,
+                    session_id: this.currentSessionId
+                })
+            });
+            
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('處理Google Drive連結失敗:', error);
+            return { success: false, error: '處理連結時發生錯誤' };
+        }
+    }
+    
+    getUploadedFiles() {
+        const previewItems = document.querySelectorAll('.file-preview-item');
+        const files = [];
+        
+        previewItems.forEach(item => {
+            if (item.dataset.fileUrl) {
+                files.push({
+                    url: item.dataset.fileUrl,
+                    type: item.dataset.fileType,
+                    name: item.dataset.fileName
+                });
+            }
+        });
+        
+        return files;
+    }
+    
+    clearUploadedFiles() {
+        const previewContainer = document.getElementById('uploadedFilesPreview');
+        previewContainer.innerHTML = '';
     }
 }
 

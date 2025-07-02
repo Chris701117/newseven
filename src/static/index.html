@@ -138,9 +138,24 @@
                 </div>
                 <div class="ai-chat-input-area">
                     <div class="ai-chat-input-container">
+                        <!-- 文件上傳區域 -->
+                        <div class="ai-chat-upload-area" id="aiChatUploadArea">
+                            <input type="file" id="aiChatFileInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple style="display: none;">
+                            <div class="upload-buttons">
+                                <button class="upload-btn" id="aiChatUploadBtn" title="上傳圖片或檔案">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <button class="upload-btn" id="aiChatImageBtn" title="上傳圖片">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                            </div>
+                            <!-- 上傳的檔案預覽區域 -->
+                            <div class="uploaded-files-preview" id="uploadedFilesPreview"></div>
+                        </div>
+                        
                         <textarea 
                             id="aiChatInput" 
-                            placeholder="輸入您的問題或需求..."
+                            placeholder="輸入您的問題或需求，或貼上Google Drive公開連結..."
                             rows="2"
                         ></textarea>
                         <button class="ai-chat-send" id="aiChatSend">
