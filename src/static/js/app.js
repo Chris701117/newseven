@@ -388,9 +388,6 @@ class App {
                     </span>
                 </td>
                 <td>
-                    <span class="badge bg-primary">${post.tag}</span>
-                </td>
-                <td>
                     <button class="btn btn-sm btn-outline" onclick="app.editPost(${post.id})">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -522,6 +519,7 @@ class App {
         });
     }
 
+    // 初始化AI設定頁面
     initAISettings() {
         this.loadAISettings();
         this.loadChatSessions();
@@ -533,81 +531,6 @@ class App {
                 this.saveAISettings();
             });
         }
-
-        const newSessionBtn = document.getElementById('newSessionBtn');
-        if (newSessionBtn) {
-            newSessionBtn.addEventListener('click', () => {
-                this.createNewChatSession();
-            });
-        }
-
-        const chatSessionList = document.getElementById('chatSessionList');
-        if (chatSessionList) {
-            chatSessionList.addEventListener('click', (e) => {
-                const sessionItem = e.target.closest('.chat-session-item');
-                if (sessionItem) {
-                    const sessionId = sessionItem.dataset.sessionId;
-                    this.loadChatSession(sessionId);
-                }
-            });
-        }
-
-        const exportChatBtn = document.getElementById('exportChatBtn');
-        if (exportChatBtn) {
-            exportChatBtn.addEventListener('click', () => {
-                this.exportChatHistory();
-            });
-        }
-
-        const importChatBtn = document.getElementById('importChatBtn');
-        if (importChatBtn) {
-            importChatBtn.addEventListener('click', () => {
-                document.getElementById('importChatFile').click();
-            });
-        }
-
-        const importChatFile = document.getElementById('importChatFile');
-        if (importChatFile) {
-            importChatFile.addEventListener('change', (e) => {
-                this.importChatHistory(e.target.files[0]);
-            });
-        }
-
-        const clearChatBtn = document.getElementById('clearChatBtn');
-        if (clearChatBtn) {
-            clearChatBtn.addEventListener('click', () => {
-                this.clearChatHistory();
-            });
-        }
-
-        const deleteSessionBtn = document.getElementById('deleteSessionBtn');
-        if (deleteSessionBtn) {
-            deleteSessionBtn.addEventListener('click', () => {
-                this.deleteChatSession();
-            });
-        }
-
-        const editSessionBtn = document.getElementById('editSessionBtn');
-        if (editSessionBtn) {
-            editSessionBtn.addEventListener('click', () => {
-                this.enableEditMode();
-            });
-        }
-
-        const saveSessionNameBtn = document.getElementById('saveSessionNameBtn');
-        if (saveSessionNameBtn) {
-            saveSessionNameBtn.addEventListener('click', () => {
-                this.saveSessionName();
-            });
-        }
-
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        if (cancelEditBtn) {
-            cancelEditBtn.addEventListener('click', () => {
-                this.cancelEditMode();
-            });
-        }
-    }
 
         const newSessionBtn = document.getElementById('newSessionBtn');
         if (newSessionBtn) {
@@ -908,6 +831,5 @@ let app;
 document.addEventListener('DOMContentLoaded', () => {
     app = new App();
 });
-
 
 
