@@ -1,19 +1,21 @@
 import os
 import sys
+import logging
+from logging.handlers import RotatingFileHandler
 # DON'T CHANGE THE ABOVE LINES
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
-from src.routes.posts import posts_bp
-from src.routes.marketing import marketing_bp
-from src.routes.operation import operation_bp
-from src.routes.settings import settings_bp
-from src.routes.ai_mock import ai_mock_bp
-from src.routes.ai_content_editor import ai_editor_bp
-from src.routes.ai_settings import ai_settings_bp
-from src.routes.auth import auth_bp
+from routes.posts import posts_bp
+from routes.marketing import marketing_bp
+from routes.operation import operation_bp
+from routes.settings import settings_bp
+from routes.ai_mock import ai_mock_bp
+from routes.ai_content_editor import ai_editor_bp
+from routes.ai_settings import ai_settings_bp
+from routes.auth import auth_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -23,22 +25,19 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///777tech.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初始化資料庫
-from src.models.user import db as user_db
-from src.models.ai_config import db as ai_config_db
-from src.models.post import db as post_db
+from models.user import db
+# 使用同一個db實例
+from models.ai_config import AIConfig
+from models.post import Post
 
-user_db.init_app(app)
-ai_config_db.init_app(app)
-post_db.init_app(app)
+db.init_app(app)
 
 # 建立資料表
 with app.app_context():
-    user_db.create_all()
-    ai_config_db.create_all()
-    post_db.create_all()
+    db.create_all()
     
     # 建立預設管理員帳號
-    from src.models.user import User
+    from models.user import User
     User.create_admin_user()
 
 # 啟用CORS

@@ -64,6 +64,14 @@ class EncryptionManager:
             return False, "Assistant ID必須以'asst_'開頭"
         
         return True, "Assistant ID格式正確"
+    
+    def encrypt(self, data):
+        """通用加密方法"""
+        return self.encrypt_api_key(data)
+    
+    def decrypt(self, encrypted_data):
+        """通用解密方法"""
+        return self.decrypt_api_key(encrypted_data)
 
 # 全域加密管理器實例
 encryption_manager = EncryptionManager()

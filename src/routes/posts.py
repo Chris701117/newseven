@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from src.models.user import db
-from src.models.post import Post
+from models.user import db
+from models.post import Post
 
 posts_bp = Blueprint('posts', __name__)
 

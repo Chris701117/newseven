@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from src.models.user import db
-from src.models.operation import OperationItem
+from models.user import db
+from models.operation import OperationItem
 
 operation_bp = Blueprint('operation', __name__)
 

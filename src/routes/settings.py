@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from src.models.user import db
-from src.models.settings import UserProfile, UserGroup, FacebookPageSetting, SystemNotification
+from models.user import db
+from models.settings import UserProfile, UserGroup, FacebookPageSetting, SystemNotification
 
 settings_bp = Blueprint('settings', __name__)
 

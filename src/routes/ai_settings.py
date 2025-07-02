@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from src.models.ai_config import AIConfig, db
-from src.utils.encryption import encryption_manager
+from models.ai_config import AIConfig, db
+from utils.encryption import encryption_manager
 from datetime import datetime
 import requests
 

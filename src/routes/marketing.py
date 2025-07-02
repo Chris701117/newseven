@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from src.models.user import db
-from src.models.marketing import MarketingItem, OnelinkMapping, Vendor
+from models.user import db
+from models.marketing import MarketingItem, OnelinkMapping, Vendor
 
 marketing_bp = Blueprint('marketing', __name__)
 

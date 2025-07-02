@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from src.models.user import db
+from models.user import db
 
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'

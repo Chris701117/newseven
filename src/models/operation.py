@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from src.models.user import db
+from models.user import db
 
 class OperationItem(db.Model):
     __tablename__ = 'operation_items'

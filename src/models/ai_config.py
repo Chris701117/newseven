@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from src.utils.encryption import encrypt_data, decrypt_data
+from utils.encryption import EncryptionManager
 import json
 
-db = SQLAlchemy()
+# 使用共享的db實例
+from models.user import db
 
 class AIConfig(db.Model):
     __tablename__ = 'ai_configs'
@@ -37,17 +38,18 @@ class AIConfig(db.Model):
     
     def __init__(self, user_id):
         self.user_id = user_id
+        self._encryption_manager = EncryptionManager()
     
     # OpenAI 相關方法
     def set_openai_api_key(self, api_key):
         """設定OpenAI API密鑰"""
         if api_key:
-            self.openai_api_key_encrypted = encrypt_data(api_key)
+            self.openai_api_key_encrypted = self._encryption_manager.encrypt(api_key)
     
     def get_openai_api_key(self):
         """獲取OpenAI API密鑰"""
         if self.openai_api_key_encrypted:
-            return decrypt_data(self.openai_api_key_encrypted)
+            return self._encryption_manager.decrypt(self.openai_api_key_encrypted)
         return None
     
     def set_openai_assistant_id(self, assistant_id):

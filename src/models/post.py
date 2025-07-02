@@ -1,6 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from src.models.user import db
+import json
+
+# 使用共享的db實例
+from models.user import db
 
 class Post(db.Model):
     __tablename__ = 'posts'
