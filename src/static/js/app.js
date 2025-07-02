@@ -505,221 +505,23 @@ class App {
             notification.style.transform = 'translateX(0)';
         }, 100);
         
-        // 關閉按鈕事件
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            this.hideNotification(notification);
-        });
-        
         // 自動關閉
         setTimeout(() => {
-            this.hideNotification(notification);
+            notification.style.transform = 'translateX(100%)';
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
         }, 5000);
-    }
-    
-    hideNotification(notification) {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }
-    
-    // 初始化貼文管理頁面
-    initPostsManage() {
-        const form = document.getElementById('postForm');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.savePost();
-            });
-        }
         
-        // 平台切換功能
-        const platformTabs = document.querySelectorAll('.platform-tabs button');
-        const contentArea = document.querySelector('.platform-content-area');
-        
-        platformTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                // 移除所有active類別
-                platformTabs.forEach(t => t.classList.remove('active'));
-                // 添加active到當前標籤
-                tab.classList.add('active');
-                
-                // 切換內容區域
-                const platform = tab.getAttribute('data-platform');
-                const placeholders = {
-                    'fb': 'Facebook 專用內容（選填）',
-                    'ig': 'Instagram 專用內容（選填）',
-                    'tiktok': 'TikTok 專用內容（選填）',
-                    'threads': 'Threads 專用內容（選填）',
-                    'x': 'X (Twitter) 專用內容（選填）'
-                };
-                
-                contentArea.innerHTML = `<textarea name="${platform}_content" class="form-input form-textarea" rows="3" placeholder="${placeholders[platform]}"></textarea>`;
-            });
+        // 點擊關閉按鈕
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.style.transform = 'translateX(100%)';
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
         });
     }
-    
-    // 初始化貼文列表頁面
-    initPostsList() {
-        this.loadPostsList();
-    }
-    
-    // 初始化貼文日曆頁面
-    initPostsCalendar() {
-        this.loadPostsCalendar();
-    }
-    
-    // 初始化行銷項目管理頁面
-    initMarketingItems() {
-        const form = document.getElementById('marketingForm');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleMarketingSubmit(form);
-            });
-        }
-    }
-    
-    // 初始化營運項目管理頁面
-    initOperationItems() {
-        const form = document.getElementById('operationForm');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleOperationSubmit(form);
-            });
-        }
-    }
-    
-    // 載入貼文列表
-    async loadPostsList() {
-        try {
-            const response = await API.getPosts();
-            const tbody = document.querySelector('#postsTable tbody');
-            
-            if (response.success && response.data.length > 0) {
-                tbody.innerHTML = response.data.map(post => `
-                    <tr>
-                        <td>${post.title}</td>
-                        <td>${post.author}</td>
-                        <td>${new Date(post.scheduled_time).toLocaleString('zh-TW')}</td>
-                        <td><span class="badge badge-${post.status === '已發佈' ? 'success' : 'warning'}">${post.status}</span></td>
-                        <td><span class="badge badge-info">${post.tag}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-outline" onclick="app.editPost(${post.id})">編輯</button>
-                            <button class="btn btn-sm btn-danger" onclick="app.deletePost(${post.id})">刪除</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } else {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">暫無貼文資料</td></tr>';
-            }
-        } catch (error) {
-            console.error('載入貼文列表失敗:', error);
-            const tbody = document.querySelector('#postsTable tbody');
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-error">載入失敗</td></tr>';
-        }
-    }
-    
-    // 載入貼文日曆
-    async loadPostsCalendar() {
-        try {
-            const response = await API.get('/posts/calendar');
-            // 實作日曆視圖邏輯
-            console.log('日曆資料:', response);
-        } catch (error) {
-            console.error('載入日曆失敗:', error);
-        }
-    }
-    
-    // 處理行銷項目提交
-    async handleMarketingSubmit(form) {
-        const formData = new FormData(form);
-        
-        const marketingData = {
-            title: formData.get('title'),
-            content: formData.get('content'),
-            start_time: formData.get('start_time'),
-            end_time: formData.get('end_time'),
-            tag: formData.get('tag'),
-            author: '當前使用者'
-        };
-        
-        try {
-            this.showLoading();
-            await API.post('/marketing', marketingData);
-            this.hideLoading();
-            this.showNotification('行銷項目儲存成功', 'success');
-            form.reset();
-        } catch (error) {
-            this.hideLoading();
-            this.showNotification('行銷項目儲存失敗', 'error');
-            console.error('儲存行銷項目失敗:', error);
-        }
-    }
-    
-    // 處理營運項目提交
-    async handleOperationSubmit(form) {
-        const formData = new FormData(form);
-        
-        const operationData = {
-            title: formData.get('title'),
-            content: formData.get('content'),
-            start_time: formData.get('start_time'),
-            end_time: formData.get('end_time'),
-            tag: formData.get('tag'),
-            author: '當前使用者'
-        };
-        
-        try {
-            this.showLoading();
-            await API.post('/operation', operationData);
-            this.hideLoading();
-            this.showNotification('營運項目儲存成功', 'success');
-            form.reset();
-        } catch (error) {
-            this.hideLoading();
-            this.showNotification('營運項目儲存失敗', 'error');
-            console.error('儲存營運項目失敗:', error);
-        }
-    }
-    
-    // 編輯貼文
-    editPost(id) {
-        // 實作編輯功能
-        console.log('編輯貼文:', id);
-    }
-    
-    // 刪除貼文
-    async deletePost(id) {
-        if (confirm('確定要刪除這篇貼文嗎？')) {
-            try {
-                await API.deletePost(id);
-                this.showNotification('貼文已刪除', 'success');
-                this.loadPostsList();
-            } catch (error) {
-                this.showNotification('刪除失敗', 'error');
-                console.error('刪除貼文失敗:', error);
-            }
-        }
-    }
-    
-    handleGlobalSearch(query) {
-        // 實作全域搜尋功能
-        console.log('搜尋:', query);
-    }
-}
 
-// 初始化應用程式
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-    app = new App();
-});
-
-
-    // 初始化AI設定頁面
     initAISettings() {
         this.loadAISettings();
         this.loadChatSessions();
@@ -731,161 +533,381 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.saveAISettings();
             });
         }
+
+        const newSessionBtn = document.getElementById('newSessionBtn');
+        if (newSessionBtn) {
+            newSessionBtn.addEventListener('click', () => {
+                this.createNewChatSession();
+            });
+        }
+
+        const chatSessionList = document.getElementById('chatSessionList');
+        if (chatSessionList) {
+            chatSessionList.addEventListener('click', (e) => {
+                const sessionItem = e.target.closest('.chat-session-item');
+                if (sessionItem) {
+                    const sessionId = sessionItem.dataset.sessionId;
+                    this.loadChatSession(sessionId);
+                }
+            });
+        }
+
+        const exportChatBtn = document.getElementById('exportChatBtn');
+        if (exportChatBtn) {
+            exportChatBtn.addEventListener('click', () => {
+                this.exportChatHistory();
+            });
+        }
+
+        const importChatBtn = document.getElementById('importChatBtn');
+        if (importChatBtn) {
+            importChatBtn.addEventListener('click', () => {
+                document.getElementById('importChatFile').click();
+            });
+        }
+
+        const importChatFile = document.getElementById('importChatFile');
+        if (importChatFile) {
+            importChatFile.addEventListener('change', (e) => {
+                this.importChatHistory(e.target.files[0]);
+            });
+        }
+
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        if (clearChatBtn) {
+            clearChatBtn.addEventListener('click', () => {
+                this.clearChatHistory();
+            });
+        }
+
+        const deleteSessionBtn = document.getElementById('deleteSessionBtn');
+        if (deleteSessionBtn) {
+            deleteSessionBtn.addEventListener('click', () => {
+                this.deleteChatSession();
+            });
+        }
+
+        const editSessionBtn = document.getElementById('editSessionBtn');
+        if (editSessionBtn) {
+            editSessionBtn.addEventListener('click', () => {
+                this.enableEditMode();
+            });
+        }
+
+        const saveSessionNameBtn = document.getElementById('saveSessionNameBtn');
+        if (saveSessionNameBtn) {
+            saveSessionNameBtn.addEventListener('click', () => {
+                this.saveSessionName();
+            });
+        }
+
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => {
+                this.cancelEditMode();
+            });
+        }
     }
-    
+
+        const newSessionBtn = document.getElementById('newSessionBtn');
+        if (newSessionBtn) {
+            newSessionBtn.addEventListener('click', () => {
+                this.createNewChatSession();
+            });
+        }
+
+        const chatSessionList = document.getElementById('chatSessionList');
+        if (chatSessionList) {
+            chatSessionList.addEventListener('click', (e) => {
+                const sessionItem = e.target.closest('.chat-session-item');
+                if (sessionItem) {
+                    const sessionId = sessionItem.dataset.sessionId;
+                    this.loadChatSession(sessionId);
+                }
+            });
+        }
+
+        const exportChatBtn = document.getElementById('exportChatBtn');
+        if (exportChatBtn) {
+            exportChatBtn.addEventListener('click', () => {
+                this.exportChatHistory();
+            });
+        }
+
+        const importChatBtn = document.getElementById('importChatBtn');
+        if (importChatBtn) {
+            importChatBtn.addEventListener('click', () => {
+                document.getElementById('importChatFile').click();
+            });
+        }
+
+        const importChatFile = document.getElementById('importChatFile');
+        if (importChatFile) {
+            importChatFile.addEventListener('change', (e) => {
+                this.importChatHistory(e.target.files[0]);
+            });
+        }
+
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        if (clearChatBtn) {
+            clearChatBtn.addEventListener('click', () => {
+                this.clearChatHistory();
+            });
+        }
+
+        const deleteSessionBtn = document.getElementById('deleteSessionBtn');
+        if (deleteSessionBtn) {
+            deleteSessionBtn.addEventListener('click', () => {
+                this.deleteChatSession();
+            });
+        }
+
+        const editSessionBtn = document.getElementById('editSessionBtn');
+        if (editSessionBtn) {
+            editSessionBtn.addEventListener('click', () => {
+                this.enableEditMode();
+            });
+        }
+
+        const saveSessionNameBtn = document.getElementById('saveSessionNameBtn');
+        if (saveSessionNameBtn) {
+            saveSessionNameBtn.addEventListener('click', () => {
+                this.saveSessionName();
+            });
+        }
+
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => {
+                this.cancelEditMode();
+            });
+        }
+    }
+
     async loadAISettings() {
         try {
-            const response = await fetch('/api/ai/settings');
-            const result = await response.json();
-            
-            if (result.success) {
-                result.data.forEach(setting => {
-                    const input = document.querySelector(`[name="${setting.setting_key}"]`);
-                    if (input && !setting.is_encrypted) {
-                        input.value = setting.setting_value || '';
-                    }
-                });
-            }
+            const settings = await API.getAISettings();
+            document.getElementById('openaiApiKey').value = settings.openai_api_key || '';
+            document.getElementById('openaiAssistantId').value = settings.openai_assistant_id || '';
+            document.getElementById('cloudinaryCloudName').value = settings.cloudinary_cloud_name || '';
+            document.getElementById('cloudinaryApiKey').value = settings.cloudinary_api_key || '';
+            document.getElementById('cloudinaryApiSecret').value = settings.cloudinary_api_secret || '';
         } catch (error) {
             console.error('載入AI設定失敗:', error);
+            this.showNotification('載入AI設定失敗', 'error');
         }
     }
-    
+
     async saveAISettings() {
-        const form = document.getElementById('aiSettingsForm');
-        const formData = new FormData(form);
-        const settings = {};
-        
-        for (let [key, value] of formData.entries()) {
-            if (value.trim()) {
-                settings[key] = value.trim();
-            }
-        }
-        
+        const openaiApiKey = document.getElementById('openaiApiKey').value;
+        const openaiAssistantId = document.getElementById('openaiAssistantId').value;
+        const cloudinaryCloudName = document.getElementById('cloudinaryCloudName').value;
+        const cloudinaryApiKey = document.getElementById('cloudinaryApiKey').value;
+        const cloudinaryApiSecret = document.getElementById('cloudinaryApiSecret').value;
+
         try {
-            this.showLoading();
-            const response = await fetch('/api/ai/settings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(settings)
+            await API.saveAISettings({
+                openai_api_key: openaiApiKey,
+                openai_assistant_id: openaiAssistantId,
+                cloudinary_cloud_name: cloudinaryCloudName,
+                cloudinary_api_key: cloudinaryApiKey,
+                cloudinary_api_secret: cloudinaryApiSecret
             });
-            
-            const result = await response.json();
-            this.hideLoading();
-            
-            if (result.success) {
-                this.showNotification('AI設定已儲存', 'success');
-            } else {
-                this.showNotification('儲存失敗: ' + result.error, 'error');
-            }
+            this.showNotification('AI設定儲存成功', 'success');
         } catch (error) {
-            this.hideLoading();
-            this.showNotification('儲存失敗', 'error');
             console.error('儲存AI設定失敗:', error);
+            this.showNotification('儲存AI設定失敗', 'error');
         }
     }
-    
-    async testAIConnection() {
-        try {
-            this.showLoading();
-            
-            // 測試OpenAI連接
-            const response = await fetch('/api/chat/generate-content', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    type: 'post',
-                    prompt: '測試連接',
-                    platform: 'test'
-                })
-            });
-            
-            const result = await response.json();
-            this.hideLoading();
-            
-            if (result.success) {
-                this.showNotification('AI連接測試成功！', 'success');
-            } else {
-                this.showNotification('AI連接測試失敗: ' + result.error, 'error');
-            }
-        } catch (error) {
-            this.hideLoading();
-            this.showNotification('連接測試失敗', 'error');
-            console.error('AI連接測試失敗:', error);
-        }
-    }
-    
+
     async loadChatSessions() {
         try {
-            const response = await fetch('/api/chat/sessions?user_id=current_user');
-            const result = await response.json();
-            
-            if (result.success) {
-                this.renderChatSessions(result.data);
+            const sessions = await API.getChatSessions();
+            const chatSessionList = document.getElementById('chatSessionList');
+            if (chatSessionList) {
+                chatSessionList.innerHTML = sessions.map(session => `
+                    <div class="chat-session-item" data-session-id="${session.id}">
+                        <span class="session-name">${session.name}</span>
+                        <div class="session-actions">
+                            <button class="edit-session-btn" data-session-id="${session.id}"><i class="fas fa-edit"></i></button>
+                            <button class="delete-session-btn" data-session-id="${session.id}"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
             }
         } catch (error) {
-            console.error('載入對話會話失敗:', error);
+            console.error('載入聊天會話失敗:', error);
+            this.showNotification('載入聊天會話失敗', 'error');
         }
     }
-    
-    renderChatSessions(sessions) {
-        const container = document.getElementById('chatSessionsList');
-        if (!container) return;
-        
-        if (sessions.length === 0) {
-            container.innerHTML = '<div class="empty-state">尚無對話記錄</div>';
+
+    async createNewChatSession() {
+        try {
+            const newSession = await API.createChatSession();
+            this.showNotification('新聊天會話已建立', 'success');
+            this.loadChatSessions();
+            this.loadChatSession(newSession.id);
+        } catch (error) {
+            console.error('建立新聊天會話失敗:', error);
+            this.showNotification('建立新聊天會話失敗', 'error');
+        }
+    }
+
+    async loadChatSession(sessionId) {
+        try {
+            const session = await API.getChatSession(sessionId);
+            this.currentChatSessionId = sessionId;
+            document.getElementById('aiChatMessages').innerHTML = ''; // 清空現有訊息
+            session.messages.forEach(msg => {
+                this.addMessageToChat(msg.content, msg.role);
+            });
+            this.showNotification(`載入會話: ${session.name}`, 'info');
+        } catch (error) {
+            console.error('載入聊天會話失敗:', error);
+            this.showNotification('載入聊天會話失敗', 'error');
+        }
+    }
+
+    async deleteChatSession() {
+        if (!this.currentChatSessionId) {
+            this.showNotification('請選擇一個會話來刪除', 'warning');
             return;
         }
-        
-        container.innerHTML = sessions.map(session => `
-            <div class="chat-session-item">
-                <div class="session-info">
-                    <div class="session-title">${session.title}</div>
-                    <div class="session-meta">
-                        ${new Date(session.updated_at).toLocaleString()} · ${session.message_count} 則訊息
-                    </div>
-                </div>
-                <div class="session-actions">
-                    <button class="btn btn-sm btn-outline" onclick="app.viewChatSession('${session.session_id}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
-    
-    async viewChatSession(sessionId) {
+        if (!confirm('確定要刪除此聊天會話嗎？')) {
+            return;
+        }
         try {
-            const response = await fetch(`/api/chat/sessions/${sessionId}/messages`);
-            const result = await response.json();
-            
-            if (result.success) {
-                this.showChatSessionModal(result.data);
-            }
+            await API.deleteChatSession(this.currentChatSessionId);
+            this.showNotification('聊天會話已刪除', 'success');
+            this.currentChatSessionId = null;
+            document.getElementById('aiChatMessages').innerHTML = '';
+            this.loadChatSessions();
         } catch (error) {
-            console.error('載入對話記錄失敗:', error);
+            console.error('刪除聊天會話失敗:', error);
+            this.showNotification('刪除聊天會話失敗', 'error');
         }
     }
-    
-    showChatSessionModal(messages) {
-        const modalContent = `
-            <div class="chat-history">
-                ${messages.map(msg => `
-                    <div class="chat-message ${msg.role}">
-                        <div class="message-meta">
-                            <strong>${msg.role === 'user' ? '用戶' : 'AI助手'}</strong>
-                            <span class="timestamp">${new Date(msg.timestamp).toLocaleString()}</span>
-                        </div>
-                        <div class="message-content">${msg.content}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        this.showModal('對話記錄', modalContent);
+
+    async exportChatHistory() {
+        if (!this.currentChatSessionId) {
+            this.showNotification('請選擇一個會話來匯出', 'warning');
+            return;
+        }
+        try {
+            const history = await API.exportChatHistory(this.currentChatSessionId);
+            const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat_session_${this.currentChatSessionId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            this.showNotification('聊天記錄匯出成功', 'success');
+        } catch (error) {
+            console.error('匯出聊天記錄失敗:', error);
+            this.showNotification('匯出聊天記錄失敗', 'error');
+        }
     }
+
+    async importChatHistory(file) {
+        if (!file) {
+            this.showNotification('請選擇一個文件來匯入', 'warning');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const history = JSON.parse(e.target.result);
+                await API.importChatHistory(history);
+                this.showNotification('聊天記錄匯入成功', 'success');
+                this.loadChatSessions();
+            } catch (error) {
+                console.error('匯入聊天記錄失敗:', error);
+                this.showNotification('匯入聊天記錄失敗', 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    clearChatHistory() {
+        if (!this.currentChatSessionId) {
+            this.showNotification('請選擇一個會話來清空', 'warning');
+            return;
+        }
+        if (!confirm('確定要清空此聊天會話的所有訊息嗎？')) {
+            return;
+        }
+        try {
+            document.getElementById('aiChatMessages').innerHTML = '';
+            this.showNotification('聊天記錄已清空', 'success');
+        } catch (error) {
+            console.error('清空聊天記錄失敗:', error);
+            this.showNotification('清空聊天記錄失敗', 'error');
+        }
+    }
+
+    enableEditMode() {
+        const currentSessionName = document.querySelector(`.chat-session-item[data-session-id="${this.currentChatSessionId}"] .session-name`);
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.value = currentSessionName.textContent;
+        editInput.classList.add('edit-session-input');
+
+        currentSessionName.replaceWith(editInput);
+        editInput.focus();
+
+        document.getElementById('editSessionBtn').style.display = 'none';
+        document.getElementById('saveSessionNameBtn').style.display = 'inline-block';
+        document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    }
+
+    saveSessionName() {
+        const editInput = document.querySelector('.edit-session-input');
+        const newName = editInput.value;
+        if (!newName) {
+            this.showNotification('會話名稱不能為空', 'warning');
+            return;
+        }
+        try {
+            // 這裡需要呼叫後端API來更新會話名稱
+            // await API.updateChatSessionName(this.currentChatSessionId, newName);
+            const sessionNameSpan = document.createElement('span');
+            sessionNameSpan.classList.add('session-name');
+            sessionNameSpan.textContent = newName;
+            editInput.replaceWith(sessionNameSpan);
+            this.showNotification('會話名稱已更新', 'success');
+            this.cancelEditMode();
+        } catch (error) {
+            console.error('更新會話名稱失敗:', error);
+            this.showNotification('更新會話名稱失敗', 'error');
+        }
+    }
+
+    cancelEditMode() {
+        const editInput = document.querySelector('.edit-session-input');
+        const sessionNameSpan = document.createElement('span');
+        sessionNameSpan.classList.add('session-name');
+        sessionNameSpan.textContent = editInput.value; // 或者從原始數據中恢復
+        editInput.replaceWith(sessionNameSpan);
+
+        document.getElementById('editSessionBtn').style.display = 'inline-block';
+        document.getElementById('saveSessionNameBtn').style.display = 'none';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+    }
+
+    handleGlobalSearch(query) {
+        // 實作全域搜尋邏輯
+        console.log('搜尋:', query);
+    }
+}
+
+// 初始化應用程式
+let app;
+document.addEventListener('DOMContentLoaded', () => {
+    app = new App();
+});
+
+
 
