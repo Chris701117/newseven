@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
-# DON'T CHANGE THE ABOVE LINES
+# DON\'T CHANGE THE ABOVE LINES
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -20,7 +20,7 @@ from routes.ai_settings import ai_settings_bp
 from routes.auth import auth_bp
 from routes.file_upload import file_upload_bp
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'), static_url_path='/static')
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # 資料庫配置
@@ -64,3 +64,5 @@ def index():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
+
+
