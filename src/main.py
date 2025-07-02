@@ -2,12 +2,13 @@ import os
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
-# DON\'T CHANGE THE ABOVE LINES
+# DON\"T CHANGE THE ABOVE LINES
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 from flask import Flask, jsonify
 from flask_cors import CORS
+from whitenoise import WhiteNoise
 
 from routes.posts import posts_bp
 from routes.marketing import marketing_bp
@@ -20,7 +21,8 @@ from routes.ai_settings import ai_settings_bp
 from routes.auth import auth_bp
 from routes.file_upload import file_upload_bp
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'), static_url_path='/static')
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+app.wsgi_app = WhiteNoise(app.wsgi_app, root=app.static_folder)
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # 資料庫配置
