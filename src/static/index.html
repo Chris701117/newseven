@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>七七七科技 - 後台管理系統</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 側邊導航欄 -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span class="logo-text">七七七科技</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h3 class="menu-title">主要功能</h3>
+                    <ul class="menu-list">
+                        <li class="menu-item active" data-module="dashboard">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>儀表板</span>
+                            </a>
+                        </li>
+                        <li class="menu-item" data-module="social">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-share-alt"></i>
+                                <span>社群模組</span>
+                                <i class="fas fa-chevron-down submenu-arrow"></i>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="#" data-view="posts-manage">貼文管理</a></li>
+                                <li><a href="#" data-view="posts-list">貼文列表</a></li>
+                                <li><a href="#" data-view="posts-calendar">貼文總覽</a></li>
+                                <li><a href="#" data-view="posts-publish">正式發佈</a></li>
+                                <li><a href="#" data-view="fb-analytics">FB數據</a></li>
+                            </ul>
+                        </li>
+                        <li class="menu-item" data-module="marketing">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-bullhorn"></i>
+                                <span>行銷模組</span>
+                                <i class="fas fa-chevron-down submenu-arrow"></i>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="#" data-view="marketing-items">項目管理</a></li>
+                                <li><a href="#" data-view="marketing-list">項目列表</a></li>
+                                <li><a href="#" data-view="marketing-overview">項目總覽</a></li>
+                                <li><a href="#" data-view="onelink">Onelink管理</a></li>
+                                <li><a href="#" data-view="vendors">廠商聯絡</a></li>
+                            </ul>
+                        </li>
+                        <li class="menu-item" data-module="operation">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-cogs"></i>
+                                <span>營運模組</span>
+                                <i class="fas fa-chevron-down submenu-arrow"></i>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="#" data-view="operation-items">項目管理</a></li>
+                                <li><a href="#" data-view="operation-list">項目列表</a></li>
+                                <li><a href="#" data-view="operation-overview">項目總覽</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="menu-section">
+                    <h3 class="menu-title">系統設定</h3>
+                    <ul class="menu-list">
+                        <li class="menu-item" data-module="settings">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-cog"></i>
+                                <span>設定</span>
+                                <i class="fas fa-chevron-down submenu-arrow"></i>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="#" data-view="profile">個人設定</a></li>
+                                <li><a href="#" data-view="facebook">FB粉絲頁</a></li>
+                                <li><a href="#" data-view="groups">群組權限</a></li>
+                                <li><a href="#" data-view="users">帳號管理</a></li>
+                                <li><a href="#" data-view="ai-settings">AI助手設定</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- AI助手浮動按鈕 -->
+        <div class="ai-assistant-fab" id="aiAssistantFab">
+            <i class="fas fa-robot"></i>
+        </div>
+
+        <!-- AI助手聊天視窗 -->
+        <div class="ai-chat-window" id="aiChatWindow">
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">
+                    <i class="fas fa-robot"></i>
+                    <span>AI助手</span>
+                </div>
+                <div class="ai-chat-controls">
+                    <button class="ai-chat-minimize" id="aiChatMinimize">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="ai-chat-close" id="aiChatClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="ai-chat-body">
+                <div class="ai-chat-messages" id="aiChatMessages">
+                    <div class="ai-message">
+                        <div class="ai-message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="ai-message-content">
+                            <p>您好！我是七七七科技的AI助手，可以幫助您：</p>
+                            <ul>
+                                <li>📝 撰寫社群貼文內容</li>
+                                <li>📊 規劃行銷活動</li>
+                                <li>⚙️ 協助營運管理</li>
+                                <li>❓ 回答系統使用問題</li>
+                            </ul>
+                            <p>有什麼可以幫助您的嗎？</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-chat-input-area">
+                    <div class="ai-chat-input-container">
+                        <textarea 
+                            id="aiChatInput" 
+                            placeholder="輸入您的問題或需求..."
+                            rows="2"
+                        ></textarea>
+                        <button class="ai-chat-send" id="aiChatSend">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="ai-chat-quick-actions">
+                        <button class="quick-action-btn" data-action="generate-post">
+                            <i class="fas fa-edit"></i>
+                            生成貼文
+                        </button>
+                        <button class="quick-action-btn" data-action="marketing-idea">
+                            <i class="fas fa-lightbulb"></i>
+                            行銷建議
+                        </button>
+                        <button class="quick-action-btn" data-action="operation-help">
+                            <i class="fas fa-question-circle"></i>
+                            營運協助
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要內容區域 -->
+        <main class="main-content">
+            <!-- 頂部導航欄 -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title" id="pageTitle">儀表板</h1>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜尋..." id="globalSearch">
+                    </div>
+                    
+                    <div class="notifications" id="notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        <div class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>通知</h3>
+                                <button class="mark-all-read">全部標記為已讀</button>
+                            </div>
+                            <div class="notification-list">
+                                <div class="notification-item unread">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <div class="notification-content">
+                                        <p>明天有3個貼文需要發布</p>
+                                        <span class="notification-time">2小時前</span>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <div class="notification-content">
+                                        <p>行銷活動即將結束</p>
+                                        <span class="notification-time">4小時前</span>
+                                    </div>
+                                </div>
+                                <div class="notification-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <div class="notification-content">
+                                        <p>FB貼文發布成功</p>
+                                        <span class="notification-time">1天前</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/32x32" alt="用戶頭像" class="user-avatar">
+                        <span class="user-name">管理員</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 內容區域 -->
+            <div class="content-area" id="contentArea">
+                <!-- 動態載入的內容將顯示在這裡 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 模態框 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">標題</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 模態框內容 -->
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <button class="btn btn-secondary" id="modalCancel">取消</button>
+                <button class="btn btn-primary" id="modalConfirm">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入指示器 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>載入中...</p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/ai-assistant.js"></script>
+</body>
+</html>
+
