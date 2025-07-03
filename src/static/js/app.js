@@ -5,23 +5,18 @@ class App {
         this.currentView = 'dashboard';
         this.sidebarCollapsed = false;
         this.isMobile = window.innerWidth <= 768;
-        
-        // 綁定 this 到方法，確保在回調中上下文正確
-        this.updatePageTitle = this.updatePageTitle.bind(this);
-        this.loadView = this.loadView.bind(this);
-        this.loadDashboard = this.loadDashboard.bind(this);
-        this.switchModule = this.switchModule.bind(this);
-        this.loadDashboardData = this.loadDashboardData.bind(this);
-        this.getViewContent = this.getViewContent.bind(this);
-        this.initViewFeatures = this.initViewFeatures.bind(this);
+
+        // 確保所有方法都正確綁定 'this' 上下文
+        this.init = this.init.bind(this);
+        this.bindEvents = this.bindEvents.bind(this);
+        this.checkMobile = this.checkMobile.bind(this);
         this.toggleSidebar = this.toggleSidebar.bind(this);
         this.toggleMobileSidebar = this.toggleMobileSidebar.bind(this);
-        this.handleGlobalSearch = this.handleGlobalSearch.bind(this);
-        this.saveAISettings = this.saveAISettings.bind(this);
-        this.startNewSession = this.startNewSession.bind(this);
-        this.enableEditMode = this.enableEditMode.bind(this);
-        this.cancelEditMode = this.cancelEditMode.bind(this);
-        this.loadAISettings = this.loadAISettings.bind(this);
+        this.switchModule = this.switchModule.bind(this);
+        this.loadView = this.loadView.bind(this);
+        this.loadDashboard = this.loadDashboard.bind(this);
+        this.updatePageTitle = this.updatePageTitle.bind(this);
+        this.updateDashboardStats = this.updateDashboardStats.bind(this);
         this.loadPostsList = this.loadPostsList.bind(this);
         this.renderPostsList = this.renderPostsList.bind(this);
         this.savePost = this.savePost.bind(this);
@@ -30,7 +25,16 @@ class App {
         this.showLoading = this.showLoading.bind(this);
         this.hideLoading = this.hideLoading.bind(this);
         this.showNotification = this.showNotification.bind(this);
-        this.updateDashboardStats = this.updateDashboardStats.bind(this);
+        this.handleGlobalSearch = this.handleGlobalSearch.bind(this);
+        this.initAISettings = this.initAISettings.bind(this);
+        this.loadAISettings = this.loadAISettings.bind(this);
+        this.saveAISettings = this.saveAISettings.bind(this);
+        this.startNewSession = this.startNewSession.bind(this);
+        this.enableEditMode = this.enableEditMode.bind(this);
+        this.cancelEditMode = this.cancelEditMode.bind(this);
+        this.getViewContent = this.getViewContent.bind(this);
+        this.initViewFeatures = this.initViewFeatures.bind(this);
+        this.loadDashboardData = this.loadDashboardData.bind(this);
 
         this.init();
     }
@@ -423,30 +427,22 @@ class App {
     initAISettings() {
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         if (saveSettingsBtn) {
-            saveSettingsBtn.addEventListener('click', () => {
-                this.saveAISettings();
-            });
+            saveSettingsBtn.addEventListener('click', this.saveAISettings);
         }
 
         const newSessionBtn = document.getElementById('newSessionBtn');
         if (newSessionBtn) {
-            newSessionBtn.addEventListener('click', () => {
-                this.startNewSession();
-            });
+            newSessionBtn.addEventListener('click', this.startNewSession);
         }
 
         const enableEditBtn = document.getElementById('enableEditBtn');
         if (enableEditBtn) {
-            enableEditBtn.addEventListener('click', () => {
-                this.enableEditMode();
-            });
+            enableEditBtn.addEventListener('click', this.enableEditMode);
         }
 
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         if (cancelEditBtn) {
-            cancelEditBtn.addEventListener('click', () => {
-                this.cancelEditMode();
-            });
+            cancelEditBtn.addEventListener('click', this.cancelEditMode);
         }
     }
 
@@ -471,45 +467,126 @@ class App {
         const cloudinaryApiKey = document.getElementById('cloudinaryApiKey').value;
         const cloudinaryApiSecret = document.getElementById('cloudinaryApiSecret').value;
 
+        const settings = {
+            openai_api_key: openaiApiKey,
+            openai_assistant_id: openaiAssistantId,
+            cloudinary_cloud_name: cloudinaryCloudName,
+            cloudinary_api_key: cloudinaryApiKey,
+            cloudinary_api_secret: cloudinaryApiSecret
+        };
+
         try {
-            this.showLoading();
-            await API.saveAISettings({
-                openai_api_key: openaiApiKey,
-                openai_assistant_id: openaiAssistantId,
-                cloudinary_cloud_name: cloudinaryCloudName,
-                cloudinary_api_key: cloudinaryApiKey,
-                cloudinary_api_secret: cloudinaryApiSecret
-            });
-            this.hideLoading();
-            this.showNotification('AI設定儲存成功', 'success');
+            await API.saveAISettings(settings);
+            this.showNotification('AI 設定儲存成功', 'success');
         } catch (error) {
-            this.hideLoading();
-            this.showNotification('AI設定儲存失敗', 'error');
             console.error('儲存AI設定失敗:', error);
+            this.showNotification('儲存AI設定失敗', 'error');
         }
     }
 
     startNewSession() {
+        // 實現開始新會話的邏輯
         console.log('開始新會話');
-        // 這裡可以加入開始新會話的邏輯，例如清空聊天記錄或重置AI助手狀態
+        this.showNotification('開始新會話', 'info');
     }
 
     enableEditMode() {
+        // 實現啟用編輯模式的邏輯
         console.log('啟用編輯模式');
-        // 這裡可以加入啟用編輯模式的邏輯，例如啟用輸入框或顯示儲存按鈕
+        this.showNotification('啟用編輯模式', 'info');
     }
 
     cancelEditMode() {
+        // 實現取消編輯模式的邏輯
         console.log('取消編輯模式');
-        // 這裡可以加入取消編輯模式的邏輯，例如禁用輸入框或隱藏儲存按鈕
+        this.showNotification('取消編輯模式', 'info');
+    }
+
+    // 視圖內容生成
+    getViewContent(view) {
+        switch (view) {
+            case 'posts-manage':
+                return Views.getPostsManage();
+            case 'marketing-items':
+                return Views.getMarketingItems();
+            case 'operation-items':
+                return Views.getOperationItems();
+            case 'profile':
+                return Views.getProfile();
+            case 'ai-settings':
+                return Views.getAISettings();
+            case 'ai-chat':
+                return Views.getAIChat();
+            default:
+                return '<h2>404 Not Found</h2><p>The requested view could not be found.</p>';
+        }
+    }
+
+    initViewFeatures(view) {
+        switch (view) {
+            case 'dashboard':
+                this.loadDashboardData();
+                break;
+            case 'posts-manage':
+                this.loadPostsList();
+                break;
+            case 'ai-settings':
+                this.initAISettings();
+                this.loadAISettings();
+                break;
+            case 'ai-chat':
+                // 確保 AI 聊天功能初始化
+                if (typeof initAIChat === 'function') {
+                    initAIChat();
+                }
+                break;
+            default:
+                // 其他視圖可能需要特定的初始化
+                break;
+        }
+    }
+
+    loadDashboardData() {
+        // 模擬從 API 載入數據
+        setTimeout(() => {
+            const stats = {
+                totalPosts: 120,
+                scheduledPosts: 15,
+                marketingItems: 30,
+                operationItems: 50
+            };
+            this.updateDashboardStats(stats);
+        }, 500);
     }
 }
 
 // 初始化應用程式
 const app = new App();
 
+// API 服務 (假設 API 服務已經在其他檔案中定義)
+// 如果 API 服務沒有定義，則需要在此處定義或引入
+// 例如:
+// const API = {
+//     getPosts: async () => { /* ... */ },
+//     createPost: async (data) => { /* ... */ },
+//     getAISettings: async () => { /* ... */ },
+//     saveAISettings: async (settings) => { /* ... */ },
+//     sendAIChatMessage: async (message) => { /* ... */ }
+// };
 
+// Views 服務 (假設 Views 服務已經在其他檔案中定義)
+// 例如:
+// const Views = {
+//     getDashboard: () => { /* ... */ },
+//     getPostsManage: () => { /* ... */ },
+//     getMarketingItems: () => { /* ... */ },
+//     getOperationItems: () => { /* ... */ },
+//     getProfile: () => { /* ... */ },
+//     getAISettings: () => { /* ... */ },
+//     getAIChat: () => { /* ... */ }
+// };
 
-
+// 確保 app 變數在全域範圍內可用，以便 HTML 中的 onclick 事件可以呼叫
+window.app = app;
 
 
