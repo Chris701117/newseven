@@ -11,6 +11,26 @@ class App {
         this.loadView = this.loadView.bind(this);
         this.loadDashboard = this.loadDashboard.bind(this);
         this.switchModule = this.switchModule.bind(this);
+        this.loadDashboardData = this.loadDashboardData.bind(this);
+        this.getViewContent = this.getViewContent.bind(this);
+        this.initViewFeatures = this.initViewFeatures.bind(this);
+        this.toggleSidebar = this.toggleSidebar.bind(this);
+        this.toggleMobileSidebar = this.toggleMobileSidebar.bind(this);
+        this.handleGlobalSearch = this.handleGlobalSearch.bind(this);
+        this.saveAISettings = this.saveAISettings.bind(this);
+        this.startNewSession = this.startNewSession.bind(this);
+        this.enableEditMode = this.enableEditMode.bind(this);
+        this.cancelEditMode = this.cancelEditMode.bind(this);
+        this.loadAISettings = this.loadAISettings.bind(this);
+        this.loadPostsList = this.loadPostsList.bind(this);
+        this.renderPostsList = this.renderPostsList.bind(this);
+        this.savePost = this.savePost.bind(this);
+        this.showModal = this.showModal.bind(this);
+        this.closeModal = this.closeModal.bind(this);
+        this.showLoading = this.showLoading.bind(this);
+        this.hideLoading = this.hideLoading.bind(this);
+        this.showNotification = this.showNotification.bind(this);
+        this.updateDashboardStats = this.updateDashboardStats.bind(this);
 
         this.init();
     }
@@ -32,15 +52,11 @@ class App {
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         
         if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => {
-                this.toggleSidebar();
-            });
+            sidebarToggle.addEventListener('click', this.toggleSidebar);
         }
         
         if (mobileMenuToggle) {
-            mobileMenuToggle.addEventListener('click', () => {
-                this.toggleMobileSidebar();
-            });
+            mobileMenuToggle.addEventListener('click', this.toggleMobileSidebar);
         }
         
         // 選單項目點擊
@@ -110,9 +126,7 @@ class App {
         // 全域搜尋
         const globalSearch = document.getElementById('globalSearch');
         if (globalSearch) {
-            globalSearch.addEventListener('input', (e) => {
-                this.handleGlobalSearch(e.target.value);
-            });
+            globalSearch.addEventListener('input', this.handleGlobalSearch);
         }
     }
     
