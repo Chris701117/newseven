@@ -14,28 +14,28 @@ class Views {
                         <div class="stat-icon">📝</div>
                         <div class="stat-content">
                             <h3>待發布貼文</h3>
-                            <div class="stat-number">12</div>
+                            <div class="stat-number" id="totalPosts">12</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📊</div>
                         <div class="stat-content">
                             <h3>進行中項目</h3>
-                            <div class="stat-number">8</div>
+                            <div class="stat-number" id="scheduledPosts">8</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">✅</div>
                         <div class="stat-content">
                             <h3>本月完成</h3>
-                            <div class="stat-number">24</div>
+                            <div class="stat-number" id="marketingItems">24</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">🤖</div>
                         <div class="stat-content">
                             <h3>AI助手狀態</h3>
-                            <div class="stat-number">在線</div>
+                            <div class="stat-number" id="operationItems">在線</div>
                         </div>
                     </div>
                 </div>
@@ -71,15 +71,15 @@ class Views {
                     <div class="quick-actions">
                         <h2>快速操作</h2>
                         <div class="action-buttons">
-                            <button class="action-btn" onclick="app.loadView('posts-manage')">
+                            <button class="action-btn" onclick="app.loadView(\'posts-manage\')">
                                 <span class="btn-icon">📝</span>
                                 新增貼文
                             </button>
-                            <button class="action-btn" onclick="app.loadView('marketing-manage')">
+                            <button class="action-btn" onclick="app.loadView(\'marketing-items\')">
                                 <span class="btn-icon">📊</span>
                                 新增行銷項目
                             </button>
-                            <button class="action-btn" onclick="app.loadView('operation-manage')">
+                            <button class="action-btn" onclick="app.loadView(\'operation-items\')">
                                 <span class="btn-icon">⚙️</span>
                                 新增營運任務
                             </button>
@@ -184,7 +184,7 @@ class Views {
                     
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="app.previewPost()">預覽貼文</button>
-                        <button type="submit" class="btn btn-primary">儲存貼文</button>
+                        <button type="submit" class="btn btn-primary" onclick="app.savePost()">儲存貼文</button>
                     </div>
                 </form>
             </div>
@@ -211,6 +211,7 @@ class Views {
                         <option value="資訊">資訊</option>
                         <option value="活動">活動</option>
                         <option value="公告">公告</option>
+                        <option value="其他">其他</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="搜尋貼文...">
                 </div>
@@ -292,6 +293,50 @@ class Views {
         `;
     }
     
+    // 正式發佈頁面
+    static getPostsPublish() {
+        return `
+            <div class="page-header">
+                <h1>正式發佈</h1>
+                <p>管理已發佈的社群貼文</p>
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>標題</th>
+                            <th>發佈平台</th>
+                            <th>發佈時間</th>
+                            <th>連結</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="loading">載入中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    // FB數據頁面
+    static getFBData() {
+        return `
+            <div class="page-header">
+                <h1>FB數據</h1>
+                <p>查看Facebook相關數據</p>
+            </div>
+            
+            <div class="data-container">
+                <p>此處將顯示Facebook數據圖表和報告。</p>
+                <!-- 這裡可以放置圖表和數據展示組件 -->
+            </div>
+        `;
+    }
+    
     // AI助手設定頁面
     static getAISettings() {
         return `
@@ -306,8 +351,7 @@ class Views {
                     <button class="tab-btn" data-tab="cloudinary">Cloudinary</button>
                     <button class="tab-btn" data-tab="github">GitHub</button>
                     <button class="tab-btn" data-tab="turso">Turso</button>
-                    <button class="tab-btn" data-tab="general">一般設定</button>
-                </div>
+                    <button class="tab-btn" data-tab="general">一般設定</n                </div>
                 
                 <form id="aiSettingsForm" class="settings-form">
                     <!-- OpenAI 設定 -->
@@ -476,7 +520,7 @@ class Views {
                     
                     <div class="form-actions main-actions">
                         <button type="button" class="btn btn-secondary" onclick="app.loadAISettings()">重新載入</button>
-                        <button type="submit" class="btn btn-primary">儲存設定</button>
+                        <button type="submit" class="btn btn-primary" onclick="app.saveAISettings()">儲存設定</button>
                     </div>
                 </form>
             </div>
@@ -484,7 +528,7 @@ class Views {
     }
     
     // 行銷項目管理頁面
-    static getMarketingManage() {
+    static getMarketingItems() {
         return `
             <div class="page-header">
                 <h1>行銷項目管理</h1>
@@ -534,7 +578,7 @@ class Views {
     }
     
     // 營運項目管理頁面
-    static getOperationManage() {
+    static getOperationItems() {
         return `
             <div class="page-header">
                 <h1>營運項目管理</h1>
@@ -590,5 +634,62 @@ class Views {
             </div>
         `;
     }
+    
+    // 個人資料頁面
+    static getProfile() {
+        return `
+            <div class="page-header">
+                <h1>個人資料</h1>
+                <p>管理您的個人帳戶設定</p>
+            </div>
+            
+            <div class="form-container">
+                <form id="profileForm" class="profile-form">
+                    <div class="form-group">
+                        <label for="userName">用戶名 *</label>
+                        <input type="text" id="userName" name="user_name" value="管理員" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userEmail">電子郵件 *</label>
+                        <input type="email" id="userEmail" name="user_email" value="admin@example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userRole">角色</label>
+                        <input type="text" id="userRole" name="user_role" value="管理員" readonly>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">儲存變更</button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+    
+    // AI聊天頁面
+    static getAIChat() {
+        return `
+            <div class="page-header">
+                <h1>AI助手聊天</h1>
+                <p>與AI助手進行對話</p>
+            </div>
+            
+            <div class="ai-chat-container">
+                <div class="chat-window" id="chatWindow">
+                    <!-- 聊天訊息將顯示在這裡 -->
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="輸入您的訊息...">
+                    <button id="sendMessageBtn" class="btn btn-primary">發送</button>
+                </div>
+            </div>
+        `;
+    }
 }
+
+
+
+
 

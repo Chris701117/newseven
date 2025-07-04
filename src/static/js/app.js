@@ -184,7 +184,8 @@ class App {
                 this.loadDashboard();
                 break;
             case 'social':
-                this.loadView('posts-manage');
+                // 預設載入貼文管理，但需要處理其他子選單的視圖
+                this.loadView('posts-manage'); 
                 break;
             case 'marketing':
                 this.loadView('marketing-items');
@@ -238,6 +239,10 @@ class App {
         const titleMap = {
             'dashboard': '儀表板',
             'posts-manage': '貼文管理',
+            'posts-list': '貼文列表',
+            'posts-overview': '貼文總覽',
+            'posts-publish': '正式發佈',
+            'fb-data': 'FB數據',
             'marketing-items': '行銷項目',
             'operation-items': '營運項目',
             'profile': '個人資料',
@@ -321,7 +326,7 @@ class App {
         } catch (error) {
             this.hideLoading();
             this.showNotification('貼文儲存失敗', 'error');
-            console.error('儲存貼文失敗:', error);
+            console.error('儲存貼文失敗', error);
         }
     }
     
@@ -479,7 +484,7 @@ class App {
             await API.saveAISettings(settings);
             this.showNotification('AI 設定儲存成功', 'success');
         } catch (error) {
-            console.error('儲存AI設定失敗:', error);
+            console.error('儲存AI設定失敗', error);
             this.showNotification('儲存AI設定失敗', 'error');
         }
     }
@@ -507,6 +512,14 @@ class App {
         switch (view) {
             case 'posts-manage':
                 return Views.getPostsManage();
+            case 'posts-list':
+                return Views.getPostsList();
+            case 'posts-overview':
+                return Views.getPostsOverview();
+            case 'posts-publish':
+                return Views.getPostsPublish();
+            case 'fb-data':
+                return Views.getFBData();
             case 'marketing-items':
                 return Views.getMarketingItems();
             case 'operation-items':
@@ -518,7 +531,8 @@ class App {
             case 'ai-chat':
                 return Views.getAIChat();
             default:
-                return '<h2>404 Not Found</h2><p>The requested view could not be found.</p>';
+                // 預設返回儀表板內容，避免 404 錯誤
+                return Views.getDashboard();
         }
     }
 
@@ -528,6 +542,9 @@ class App {
                 this.loadDashboardData();
                 break;
             case 'posts-manage':
+                // this.loadPostsList(); // 貼文管理頁面不需要載入貼文列表，因為它是一個表單頁面
+                break;
+            case 'posts-list':
                 this.loadPostsList();
                 break;
             case 'ai-settings':
@@ -588,5 +605,10 @@ const app = new App();
 
 // 確保 app 變數在全域範圍內可用，以便 HTML 中的 onclick 事件可以呼叫
 window.app = app;
+
+
+
+
+
 
 
